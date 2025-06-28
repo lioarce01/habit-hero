@@ -35,22 +35,41 @@ const getTitleForLevel = (level: number): string => {
   return 'Novice Hero';
 };
 
+// Fixed XP calculation functions
+const calculateXPNeededForLevel = (level: number): number => {
+  if (level <= 1) return 0;
+  
+  let totalXP = 0;
+  for (let i = 1; i < level; i++) {
+    totalXP += Math.floor(100 * Math.pow(1.5, i - 1));
+  }
+  
+  return totalXP;
+};
+
 const calculateXPToNextLevel = (level: number): number => {
   return Math.floor(100 * Math.pow(1.5, level - 1));
 };
 
-const calculateXPForCurrentLevel = (level: number): number => {
-  if (level <= 1) return 0;
-  return Math.floor(100 * Math.pow(1.5, level - 2));
-};
-
 export const HeroProfile: React.FC<HeroProfileProps> = ({ profile }) => {
   const ClassIcon = getClassIcon(profile.hero_class);
-  const xpToNext = calculateXPToNextLevel(profile.level);
-  const currentLevelXP = calculateXPForCurrentLevel(profile.level);
+  
+  // Fixed XP progress calculation
+  const currentLevelXP = calculateXPNeededForLevel(profile.level);
+  const nextLevelXP = calculateXPNeededForLevel(profile.level + 1);
   const xpInCurrentLevel = profile.total_xp - currentLevelXP;
-  const xpNeededForCurrentLevel = xpToNext - currentLevelXP;
-  const xpProgress = Math.max(0, Math.min(100, (xpInCurrentLevel / xpNeededForCurrentLevel) * 100));
+  const xpNeededForNextLevel = nextLevelXP - currentLevelXP;
+  const xpProgress = Math.max(0, Math.min(100, (xpInCurrentLevel / xpNeededForNextLevel) * 100));
+  
+  console.log('XP Progress calculation:', {
+    level: profile.level,
+    totalXP: profile.total_xp,
+    currentLevelXP,
+    nextLevelXP,
+    xpInCurrentLevel,
+    xpNeededForNextLevel,
+    xpProgress
+  });
   
   const getStatColor = (statType: string) => {
     const colors = {
@@ -109,7 +128,7 @@ export const HeroProfile: React.FC<HeroProfileProps> = ({ profile }) => {
             <span className="text-sm text-gray-300">Experience</span>
           </div>
           <span className="text-sm text-gray-400">
-            {xpInCurrentLevel} / {xpNeededForCurrentLevel} XP
+            {xpInCurrentLevel} / {xpNeededForNextLevel} XP
           </span>
         </div>
         <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
@@ -119,7 +138,7 @@ export const HeroProfile: React.FC<HeroProfileProps> = ({ profile }) => {
           />
         </div>
         <div className="text-xs text-gray-500 mt-1">
-          Total XP: {profile.total_xp} | Next Level: {xpToNext} XP
+          Total XP: {profile.total_xp} | Next Level: {nextLevelXP} XP
         </div>
       </div>
 

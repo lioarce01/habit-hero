@@ -63,20 +63,37 @@ const calculateStatGain = (difficulty: number): number => {
   return difficulty;
 };
 
+// Fixed level calculation - this was the main issue
 const calculateLevelFromXP = (totalXP: number): number => {
   if (totalXP < 100) return 1;
   
   let level = 1;
-  let xpRequired = 100;
-  let currentXP = totalXP;
+  let xpUsed = 0;
   
-  while (currentXP >= xpRequired) {
-    currentXP -= xpRequired;
+  while (true) {
+    const xpNeededForNextLevel = Math.floor(100 * Math.pow(1.5, level - 1));
+    
+    if (xpUsed + xpNeededForNextLevel > totalXP) {
+      break;
+    }
+    
+    xpUsed += xpNeededForNextLevel;
     level++;
-    xpRequired = Math.floor(100 * Math.pow(1.5, level - 2));
   }
   
-  return level - 1;
+  return level;
+};
+
+// Helper function to calculate XP needed for a specific level
+const calculateXPNeededForLevel = (level: number): number => {
+  if (level <= 1) return 0;
+  
+  let totalXP = 0;
+  for (let i = 1; i < level; i++) {
+    totalXP += Math.floor(100 * Math.pow(1.5, i - 1));
+  }
+  
+  return totalXP;
 };
 
 export const useGameStore = create<GameState>()((set, get) => ({
@@ -401,7 +418,17 @@ export const useGameStore = create<GameState>()((set, get) => ({
 
       // Calculate new user stats
       const newTotalXP = profile.total_xp + xpGain;
+      const oldLevel = profile.level;
       const newLevel = calculateLevelFromXP(newTotalXP);
+      
+      console.log('Level calculation:', {
+        oldXP: profile.total_xp,
+        xpGain,
+        newTotalXP,
+        oldLevel,
+        newLevel,
+        leveledUp: newLevel > oldLevel
+      });
       
       const statUpdates = {
         total_xp: newTotalXP,
@@ -426,21 +453,24 @@ export const useGameStore = create<GameState>()((set, get) => ({
         total_completions: newTotalCompletions,
       });
 
+      const leveledUp = newLevel > oldLevel;
+
       console.log('Quest completed successfully:', {
         questId,
         xpGain,
         statGain,
         newStreak,
         newLevel,
-        leveledUp: newLevel > profile.level
+        leveledUp
       });
 
       return {
         xpGain,
         statGain,
         newStreak,
-        leveledUp: newLevel > profile.level,
+        leveledUp,
         newLevel,
+        oldLevel,
       };
     } catch (error) {
       console.error('Error completing quest:', error);
