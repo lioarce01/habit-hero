@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { AuthForm } from './components/AuthForm';
 import { HeroCreation } from './components/HeroCreation';
 import { Dashboard } from './components/Dashboard';
+import { BoltBadge } from './components/BoltBadge';
 import { useAuth } from './hooks/useAuth';
 import { useGameData } from './hooks/useGameData';
 
@@ -23,6 +24,7 @@ function App() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
+        <BoltBadge />
         <div className="text-center">
           <div className="relative">
             <div className="w-20 h-20 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
@@ -39,13 +41,19 @@ function App() {
 
   // Show auth form if no user
   if (!user) {
-    return <AuthForm onSuccess={() => {}} />;
+    return (
+      <>
+        <BoltBadge />
+        <AuthForm onSuccess={() => {}} />
+      </>
+    );
   }
 
   // Show loading while fetching profile (only after user is confirmed)
   if (profileLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
+        <BoltBadge />
         <div className="text-center">
           <div className="relative">
             <div className="w-20 h-20 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
@@ -62,14 +70,24 @@ function App() {
 
   // Show hero creation if no profile exists
   if (!profile) {
-    return <HeroCreation onHeroCreated={() => {
-      console.log('Hero creation completed, should redirect to dashboard');
-      // The App component will automatically re-render when the profile is set in the store
-    }} />;
+    return (
+      <>
+        <BoltBadge />
+        <HeroCreation onHeroCreated={() => {
+          console.log('Hero creation completed, should redirect to dashboard');
+          // The App component will automatically re-render when the profile is set in the store
+        }} />
+      </>
+    );
   }
 
   // Show dashboard if everything is ready
-  return <Dashboard />;
+  return (
+    <>
+      <BoltBadge />
+      <Dashboard />
+    </>
+  );
 }
 
 export default App;
