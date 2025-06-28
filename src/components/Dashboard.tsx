@@ -6,6 +6,7 @@ import { useGameData } from '../hooks/useGameData';
 import { useGameStore } from '../store/gameStore';
 import { useAuth } from '../hooks/useAuth';
 import { LogOut, BarChart3, RefreshCw } from 'lucide-react';
+import { DashboardSkeleton, HeroProfileSkeleton, QuestBoardSkeleton, StatCardSkeleton } from './skeletons';
 
 type ActiveTab = 'quests' | 'progress';
 
@@ -15,7 +16,7 @@ export const Dashboard: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   
   const { user, signOut } = useAuth();
-  const { profile, quests, loading } = useGameData();
+  const { profile, quests, loading, profileLoading, questsLoading } = useGameData();
   const { refreshData } = useGameStore();
 
   const handleSignOut = async () => {
@@ -50,12 +51,24 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  if (loading || !profile) {
+  // Show full skeleton while everything is loading
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
+  // Show error state if no profile after loading
+  if (!profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading your epic adventure...</p>
+          <div className="text-red-400 text-xl mb-4">⚠️ Unable to load your hero profile</div>
+          <button
+            onClick={handleRefresh}
+            className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white 
+              rounded-lg hover:from-yellow-400 hover:to-orange-400 transition-all font-semibold"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -97,23 +110,37 @@ export const Dashboard: React.FC = () => {
 
         {/* Hero Profile */}
         <div className="mb-8">
-          <HeroProfile profile={profile} />
+          {profileLoading ? (
+            <HeroProfileSkeleton />
+          ) : (
+            <HeroProfile profile={profile} />
+          )}
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 text-center">
-            <div className="text-2xl font-bold text-green-400">{quests.length}</div>
-            <div className="text-sm text-gray-400">Active Quests</div>
-          </div>
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 text-center">
-            <div className="text-2xl font-bold text-blue-400">{profile.level}</div>
-            <div className="text-sm text-gray-400">Hero Level</div>
-          </div>
-          <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-400">{profile.total_xp}</div>
-            <div className="text-sm text-gray-400">Total Experience</div>
-          </div>
+          {profileLoading || questsLoading ? (
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          ) : (
+            <>
+              <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 text-center">
+                <div className="text-2xl font-bold text-green-400">{quests.length}</div>
+                <div className="text-sm text-gray-400">Active Quests</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 text-center">
+                <div className="text-2xl font-bold text-blue-400">{profile.level}</div>
+                <div className="text-sm text-gray-400">Hero Level</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg border border-gray-700 p-4 text-center">
+                <div className="text-2xl font-bold text-yellow-400">{profile.total_xp}</div>
+                <div className="text-sm text-gray-400">Total Experience</div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Navigation Tabs */}
@@ -144,11 +171,17 @@ export const Dashboard: React.FC = () => {
         {/* Tab Content */}
         <div className="min-h-[400px]">
           {activeTab === 'quests' && (
-            <QuestBoard
-              quests={quests}
-              onAddQuest={() => setShowQuestManager(true)}
-              onQuestComplete={handleQuestComplete}
-            />
+            <>
+              {questsLoading ? (
+                <QuestBoardSkeleton />
+              ) : (
+                <QuestBoard
+                  quests={quests}
+                  onAddQuest={() => setShowQuestManager(true)}
+                  onQuestComplete={handleQuestComplete}
+                />
+              )}
+            </>
           )}
           
           {activeTab === 'progress' && (

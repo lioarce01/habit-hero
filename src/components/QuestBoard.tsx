@@ -1,6 +1,7 @@
 import React from 'react';
 import { Database } from '../lib/database.types';
 import { QuestCard } from './QuestCard';
+import { QuestCardSkeleton } from './skeletons';
 import { Scroll, Plus } from 'lucide-react';
 
 type Quest = Database['public']['Tables']['quests']['Row'];
@@ -9,12 +10,14 @@ interface QuestBoardProps {
   quests: Quest[];
   onAddQuest: () => void;
   onQuestComplete: () => void;
+  loading?: boolean;
 }
 
 export const QuestBoard: React.FC<QuestBoardProps> = ({ 
   quests, 
   onAddQuest,
-  onQuestComplete
+  onQuestComplete,
+  loading = false
 }) => {
   return (
     <div className="space-y-6">
@@ -26,16 +29,23 @@ export const QuestBoard: React.FC<QuestBoardProps> = ({
         
         <button
           onClick={onAddQuest}
+          disabled={loading}
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 
             text-white rounded-lg hover:from-purple-500 hover:to-blue-500 transition-all 
-            transform hover:scale-105 font-semibold shadow-lg"
+            transform hover:scale-105 font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           New Quest
         </button>
       </div>
 
-      {quests.length > 0 ? (
+      {loading ? (
+        <div className="grid gap-4">
+          {[1, 2, 3].map(index => (
+            <QuestCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : quests.length > 0 ? (
         <div className="grid gap-4">
           {quests.map(quest => (
             <QuestCard

@@ -24,8 +24,14 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading your epic adventure...</p>
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <div className="absolute inset-0 w-20 h-20 border-4 border-orange-400 border-b-transparent rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-white text-xl font-semibold">Loading your epic adventure...</p>
+            <p className="text-gray-400 text-sm">Preparing the realm for your return</p>
+          </div>
         </div>
       </div>
     );
@@ -41,8 +47,14 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Preparing your hero...</p>
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <div className="absolute inset-0 w-20 h-20 border-4 border-purple-400 border-b-transparent rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-white text-xl font-semibold">Preparing your hero...</p>
+            <p className="text-gray-400 text-sm">Gathering your legendary equipment</p>
+          </div>
         </div>
       </div>
     );
