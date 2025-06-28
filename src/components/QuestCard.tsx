@@ -25,21 +25,14 @@ const statColors = {
 };
 
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
-  const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { isQuestCompletedToday, completeQuest } = useQuestCompletions();
 
   const StatIcon = statIcons[quest.stat_type];
   const statColor = statColors[quest.stat_type];
 
-  useEffect(() => {
-    checkCompletionStatus();
-  }, [quest.id]);
-
-  const checkCompletionStatus = async () => {
-    const completed = await isQuestCompletedToday(quest.id);
-    setIsCompleted(completed);
-  };
+  // Check if quest is completed today using the hook
+  const isCompleted = isQuestCompletedToday(quest.id);
 
   const handleComplete = async () => {
     if (isCompleted || loading) return;
@@ -47,10 +40,10 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
     setLoading(true);
     try {
       await completeQuest(quest.id, quest.difficulty, quest.stat_type, quest.current_streak);
-      setIsCompleted(true);
-      onComplete();
+      onComplete(); // This will trigger a refetch in the parent component
     } catch (error) {
       console.error('Error completing quest:', error);
+      // You could add a toast notification here for better UX
     } finally {
       setLoading(false);
     }

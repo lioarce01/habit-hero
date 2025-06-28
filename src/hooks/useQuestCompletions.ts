@@ -11,6 +11,34 @@ export const useQuestCompletions = () => {
   const { profile, updateProfile } = useUserProfile();
   const [completions, setCompletions] = useState<QuestCompletion[]>([]);
   const [loading, setLoading] = useState(false);
+  const [completedQuestIds, setCompletedQuestIds] = useState<Set<string>>(new Set());
+
+  // Load today's completions on mount
+  useEffect(() => {
+    if (user) {
+      loadTodayCompletions();
+    }
+  }, [user]);
+
+  const loadTodayCompletions = async () => {
+    if (!user) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('quest_completions')
+        .select('quest_id')
+        .eq('user_id', user.id)
+        .eq('completed_at', today);
+
+      if (error) throw error;
+
+      const completedIds = new Set(data?.map(completion => completion.quest_id) || []);
+      setCompletedQuestIds(completedIds);
+    } catch (error) {
+      console.error('Error loading today completions:', error);
+    }
+  };
 
   const getTodayCompletions = async (questId?: string) => {
     if (!user) return [];
@@ -36,9 +64,8 @@ export const useQuestCompletions = () => {
     }
   };
 
-  const isQuestCompletedToday = async (questId: string): Promise<boolean> => {
-    const todayCompletions = await getTodayCompletions(questId);
-    return todayCompletions.length > 0;
+  const isQuestCompletedToday = (questId: string): boolean => {
+    return completedQuestIds.has(questId);
   };
 
   const calculateQuestXP = (difficulty: number, streak: number): number => {
@@ -58,11 +85,16 @@ export const useQuestCompletions = () => {
   const completeQuest = async (questId: string, difficulty: number, statType: string, currentStreak: number) => {
     if (!user || !profile) throw new Error('No user or profile found');
 
+    // Check if already completed today (local state first)
+    if (completedQuestIds.has(questId)) {
+      throw new Error('Quest already completed today');
+    }
+
     setLoading(true);
 
     try {
-      // Check if already completed today
-      const isCompleted = await isQuestCompletedToday(questId);
+      // Double-check with database
+      const isCompleted = await isQuestCompletedTodayFromDB(questId);
       if (isCompleted) {
         throw new Error('Quest already completed today');
       }
@@ -108,6 +140,9 @@ export const useQuestCompletions = () => {
       // Update user profile
       await updateProfile(statUpdates);
 
+      // Update local state immediately
+      setCompletedQuestIds(prev => new Set([...prev, questId]));
+
       return {
         xpGain,
         statGain,
@@ -123,11 +158,17 @@ export const useQuestCompletions = () => {
     }
   };
 
+  const isQuestCompletedTodayFromDB = async (questId: string): Promise<boolean> => {
+    const todayCompletions = await getTodayCompletions(questId);
+    return todayCompletions.length > 0;
+  };
+
   return {
     completions,
     loading,
     completeQuest,
     getTodayCompletions,
     isQuestCompletedToday,
+    loadTodayCompletions,
   };
 };

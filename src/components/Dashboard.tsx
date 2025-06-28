@@ -4,6 +4,7 @@ import { HeroProfile } from './HeroProfile';
 import { QuestBoard } from './QuestBoard';
 import { QuestManager } from './QuestManager';
 import { useQuests } from '../hooks/useQuests';
+import { useQuestCompletions } from '../hooks/useQuestCompletions';
 import { useAuth } from '../hooks/useAuth';
 import { LogOut, BarChart3 } from 'lucide-react';
 
@@ -21,6 +22,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
   
   const { signOut } = useAuth();
   const { quests, loading, refetch } = useQuests({ status: 'active' });
+  const { loadTodayCompletions } = useQuestCompletions();
 
   const handleSignOut = async () => {
     await signOut();
@@ -30,7 +32,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
     refetch();
   };
 
-  const handleQuestComplete = () => {
+  const handleQuestComplete = async () => {
+    // Reload today's completions and refetch quests
+    await loadTodayCompletions();
     refetch();
   };
 
