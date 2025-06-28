@@ -18,11 +18,50 @@ const statIcons = {
   spirit: Leaf
 };
 
-const statColors = {
-  power: 'red',
-  wisdom: 'blue', 
-  vitality: 'green',
-  spirit: 'purple'
+const getStatColorClasses = (statType: string) => {
+  const colorClasses = {
+    power: {
+      bg: 'bg-red-600',
+      bgOpacity: 'bg-red-600 bg-opacity-20',
+      border: 'border-red-500',
+      text: 'text-red-400',
+      gradient: 'from-red-600 to-red-700',
+      hoverGradient: 'hover:from-red-500 hover:to-red-600',
+      borderHover: 'hover:border-red-400',
+      shadow: 'hover:shadow-red-500/25'
+    },
+    wisdom: {
+      bg: 'bg-blue-600',
+      bgOpacity: 'bg-blue-600 bg-opacity-20',
+      border: 'border-blue-500',
+      text: 'text-blue-400',
+      gradient: 'from-blue-600 to-blue-700',
+      hoverGradient: 'hover:from-blue-500 hover:to-blue-600',
+      borderHover: 'hover:border-blue-400',
+      shadow: 'hover:shadow-blue-500/25'
+    },
+    vitality: {
+      bg: 'bg-green-600',
+      bgOpacity: 'bg-green-600 bg-opacity-20',
+      border: 'border-green-500',
+      text: 'text-green-400',
+      gradient: 'from-green-600 to-green-700',
+      hoverGradient: 'hover:from-green-500 hover:to-green-600',
+      borderHover: 'hover:border-green-400',
+      shadow: 'hover:shadow-green-500/25'
+    },
+    spirit: {
+      bg: 'bg-purple-600',
+      bgOpacity: 'bg-purple-600 bg-opacity-20',
+      border: 'border-purple-500',
+      text: 'text-purple-400',
+      gradient: 'from-purple-600 to-purple-700',
+      hoverGradient: 'hover:from-purple-500 hover:to-purple-600',
+      borderHover: 'hover:border-purple-400',
+      shadow: 'hover:shadow-purple-500/25'
+    }
+  };
+  return colorClasses[statType as keyof typeof colorClasses] || colorClasses.power;
 };
 
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
@@ -35,7 +74,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
   const { completeQuest, isQuestCompletedToday } = useGameStore();
 
   const StatIcon = statIcons[quest.stat_type];
-  const statColor = statColors[quest.stat_type];
+  const colorClasses = getStatColorClasses(quest.stat_type);
 
   // Check if quest is completed today using the store
   const isCompleted = isQuestCompletedToday(quest.id);
@@ -115,7 +154,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
       <div className={`rounded-xl border-2 p-6 transition-all duration-300 transform hover:scale-105 shadow-lg relative
         ${isCompleted 
           ? 'bg-gradient-to-r from-green-900 to-emerald-900 border-green-500 opacity-75' 
-          : `bg-gradient-to-r from-gray-800 to-gray-900 border-${statColor}-500 hover:border-${statColor}-400 hover:shadow-${statColor}-500/25`
+          : `bg-gradient-to-r from-gray-800 to-gray-900 ${colorClasses.border} ${colorClasses.borderHover} ${colorClasses.shadow}`
         }`}>
         
         {/* Level Up Notification */}
@@ -133,9 +172,9 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <div className={`w-10 h-10 rounded-full bg-${statColor}-600 bg-opacity-20 border border-${statColor}-500 
+              <div className={`w-10 h-10 rounded-full ${colorClasses.bgOpacity} ${colorClasses.border} 
                 flex items-center justify-center`}>
-                <StatIcon className={`w-5 h-5 text-${statColor}-400`} />
+                <StatIcon className={`w-5 h-5 ${colorClasses.text}`} />
               </div>
               
               <div>
@@ -200,8 +239,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
             <button
               onClick={handleComplete}
               disabled={loading}
-              className={`px-6 py-2 bg-gradient-to-r from-${statColor}-600 to-${statColor}-700 
-                text-white rounded-lg hover:from-${statColor}-500 hover:to-${statColor}-600 
+              className={`px-6 py-2 bg-gradient-to-r ${colorClasses.gradient} 
+                text-white rounded-lg ${colorClasses.hoverGradient} 
                 transition-all transform hover:scale-105 font-semibold shadow-lg
                 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2`}
             >

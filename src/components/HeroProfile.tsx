@@ -81,6 +81,31 @@ export const HeroProfile: React.FC<HeroProfileProps> = ({ profile }) => {
     return colors[statType as keyof typeof colors] || 'gray';
   };
 
+  const getStatColorClasses = (statType: string) => {
+    const colorClasses = {
+      power: {
+        icon: 'text-red-400',
+        bar: 'bg-red-500'
+      },
+      wisdom: {
+        icon: 'text-blue-400',
+        bar: 'bg-blue-500'
+      },
+      vitality: {
+        icon: 'text-green-400',
+        bar: 'bg-green-500'
+      },
+      spirit: {
+        icon: 'text-purple-400',
+        bar: 'bg-purple-500'
+      }
+    };
+    return colorClasses[statType as keyof typeof colorClasses] || {
+      icon: 'text-gray-400',
+      bar: 'bg-gray-500'
+    };
+  };
+
   const getClassColorClasses = () => {
     const colors = {
       warrior: 'from-red-600 to-red-800 border-red-500',
@@ -146,20 +171,20 @@ export const HeroProfile: React.FC<HeroProfileProps> = ({ profile }) => {
       <div className="grid grid-cols-2 gap-4">
         {Object.entries(stats).map(([statType, value]) => {
           const StatIcon = statIcons[statType as keyof typeof statIcons];
-          const color = getStatColor(statType);
+          const colorClasses = getStatColorClasses(statType);
           
           return (
             <div key={statType} className="bg-gray-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <StatIcon className={`w-4 h-4 text-${color}-400`} />
+                  <StatIcon className={`w-4 h-4 ${colorClasses.icon}`} />
                   <span className="text-sm text-gray-300 capitalize font-medium">{statType}</span>
                 </div>
                 <span className="font-bold text-white">{value}</span>
               </div>
               <div className="w-full bg-gray-600 rounded-full h-2">
                 <div 
-                  className={`h-full bg-${color}-500 rounded-full transition-all duration-300`}
+                  className={`h-full ${colorClasses.bar} rounded-full transition-all duration-300`}
                   style={{ width: `${Math.min((value / 100) * 100, 100)}%` }}
                 />
               </div>
