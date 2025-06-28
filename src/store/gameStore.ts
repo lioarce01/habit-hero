@@ -34,6 +34,9 @@ interface GameState {
   setQuestsLoading: (loading: boolean) => void;
   setCompletionsLoading: (loading: boolean) => void;
   
+  // Reset store
+  resetStore: () => void;
+  
   // Computed values
   isQuestCompletedToday: (questId: string) => boolean;
   
@@ -86,6 +89,16 @@ export const useGameStore = create<GameState>()(
     setQuestsLoading: (loading) => set({ questsLoading: loading }),
     setCompletionsLoading: (loading) => set({ completionsLoading: loading }),
     
+    // Reset store
+    resetStore: () => set({
+      profile: null,
+      profileLoading: false,
+      quests: [],
+      questsLoading: false,
+      todayCompletions: new Set(),
+      completionsLoading: false,
+    }),
+    
     // Computed values
     isQuestCompletedToday: (questId) => get().todayCompletions.has(questId),
     
@@ -94,6 +107,8 @@ export const useGameStore = create<GameState>()(
       const { setProfileLoading, setQuestsLoading, setCompletionsLoading } = get();
       
       try {
+        console.log('Initializing user data for:', userId);
+        
         // Set loading states
         setProfileLoading(true);
         setQuestsLoading(true);
@@ -106,9 +121,16 @@ export const useGameStore = create<GameState>()(
           supabase.from('quest_completions').select('quest_id').eq('user_id', userId).eq('completed_at', new Date().toISOString().split('T')[0])
         ]);
         
+        console.log('Profile result:', profileResult);
+        console.log('Quests result:', questsResult);
+        console.log('Completions result:', completionsResult);
+        
         // Update state
         if (profileResult.data) {
           set({ profile: profileResult.data });
+        } else {
+          console.log('No profile found for user:', userId);
+          set({ profile: null });
         }
         
         if (questsResult.data) {
@@ -142,6 +164,7 @@ export const useGameStore = create<GameState>()(
             filter: `id=eq.${userId}`
           },
           (payload) => {
+            console.log('Profile change received:', payload);
             if (payload.eventType === 'UPDATE' && payload.new) {
               set({ profile: payload.new as UserProfile });
             }
@@ -166,6 +189,7 @@ export const useGameStore = create<GameState>()(
             filter: `user_id=eq.${userId}`
           },
           (payload) => {
+            console.log('Quest change received:', payload);
             const { updateQuest, addQuest, setQuests } = get();
             
             if (payload.eventType === 'INSERT' && payload.new) {
@@ -199,6 +223,7 @@ export const useGameStore = create<GameState>()(
             filter: `user_id=eq.${userId}`
           },
           (payload) => {
+            console.log('Completion change received:', payload);
             if (payload.new && payload.new.completed_at === today) {
               const { addTodayCompletion } = get();
               addTodayCompletion(payload.new.quest_id);

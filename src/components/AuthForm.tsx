@@ -28,9 +28,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       if (error) {
         setError(error.message);
       } else {
-        onSuccess();
+        // Don't call onSuccess here - let the auth state change handle navigation
+        console.log('Authentication successful');
       }
     } catch (err) {
+      console.error('Auth error:', err);
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);

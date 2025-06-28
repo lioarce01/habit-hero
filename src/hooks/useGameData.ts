@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { useAuth } from './useAuth';
 
 export const useGameData = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const {
     profile,
     profileLoading,
@@ -16,12 +16,17 @@ export const useGameData = () => {
     subscribeToQuests,
     subscribeToCompletions,
     isQuestCompletedToday,
+    resetStore,
   } = useGameStore();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // Reset store when user logs out
+      resetStore();
+      return;
+    }
 
-    // Initialize data
+    // Initialize data when user is available
     initializeUserData(user.id);
 
     // Set up real-time subscriptions
@@ -39,12 +44,12 @@ export const useGameData = () => {
 
   return {
     profile,
-    profileLoading,
+    profileLoading: authLoading || profileLoading,
     quests,
     questsLoading,
     todayCompletions,
     completionsLoading,
     isQuestCompletedToday,
-    loading: profileLoading || questsLoading || completionsLoading,
+    loading: authLoading || profileLoading || questsLoading || completionsLoading,
   };
 };
