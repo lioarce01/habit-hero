@@ -51,9 +51,8 @@ function App() {
   // Show hero creation if no profile exists
   if (!profile) {
     return <HeroCreation onHeroCreated={() => {
-      console.log('Hero creation completed, should redirect to dashboard');
-      // Force a re-render by triggering a state update
-      window.location.reload();
+      console.log('Hero creation completed, profile should now exist in store');
+      // The profile should now be set in the store, so React will re-render automatically
     }} />;
   }
 

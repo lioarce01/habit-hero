@@ -149,6 +149,26 @@ export const useGameStore = create<GameState>()(
       console.log('Creating profile in store:', profileData, userId);
       
       try {
+        // First check if profile already exists
+        const { data: existingProfile, error: checkError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking existing profile:', checkError);
+          throw checkError;
+        }
+
+        // If profile already exists, return it
+        if (existingProfile) {
+          console.log('Profile already exists, returning existing profile:', existingProfile);
+          set({ profile: existingProfile });
+          return { data: existingProfile, error: null };
+        }
+
+        // Create new profile if it doesn't exist
         const { data, error } = await supabase
           .from('users')
           .insert({
@@ -160,6 +180,25 @@ export const useGameStore = create<GameState>()(
 
         if (error) {
           console.error('Database error creating profile:', error);
+          
+          // If it's a duplicate key error, try to fetch the existing profile
+          if (error.code === '23505') {
+            console.log('Duplicate key error, fetching existing profile...');
+            const { data: existingData, error: fetchError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', userId)
+              .single();
+            
+            if (fetchError) {
+              throw fetchError;
+            }
+            
+            console.log('Found existing profile after duplicate error:', existingData);
+            set({ profile: existingData });
+            return { data: existingData, error: null };
+          }
+          
           throw error;
         }
 

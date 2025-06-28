@@ -50,6 +50,7 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [showNameInput, setShowNameInput] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { user } = useAuth();
   const { createProfile } = useGameStore();
@@ -57,12 +58,14 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
   const handleClassSelect = (classKey: string) => {
     setSelectedClass(classKey);
     setShowNameInput(true);
+    setError(null);
   };
 
   const handleCreateHero = async () => {
     if (!heroName.trim() || !selectedClass || loading || !user) return;
 
     setLoading(true);
+    setError(null);
 
     try {
       console.log('Creating hero profile:', { name: heroName.trim(), hero_class: selectedClass });
@@ -74,18 +77,18 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
 
       if (error) {
         console.error('Error creating hero:', error);
+        setError('Failed to create hero. Please try again.');
         return;
       }
 
       console.log('Hero created successfully:', data);
       
-      // Small delay to ensure the profile is properly set in the store
-      setTimeout(() => {
-        onHeroCreated();
-      }, 100);
+      // Call the callback immediately since the profile is now set in the store
+      onHeroCreated();
       
     } catch (error) {
       console.error('Error creating hero:', error);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -154,6 +157,12 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
             <div className="bg-gray-800 rounded-xl p-8 border border-gray-700">
               <h3 className="text-2xl font-bold text-white mb-6 text-center">Name Your Hero</h3>
               
+              {error && (
+                <div className="bg-red-600 bg-opacity-20 border border-red-500 rounded-lg p-3 mb-6">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+              
               <div className="mb-6">
                 <input
                   type="text"
@@ -178,6 +187,7 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
                     setShowNameInput(false);
                     setSelectedClass('');
                     setHeroName('');
+                    setError(null);
                   }}
                   disabled={loading}
                   className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-500 
