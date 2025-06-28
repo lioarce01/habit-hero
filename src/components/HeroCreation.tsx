@@ -53,7 +53,7 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
   const [error, setError] = useState<string | null>(null);
 
   const { user } = useAuth();
-  const { createProfile } = useGameStore();
+  const { createProfile, setProfile } = useGameStore();
 
   const handleClassSelect = (classKey: string) => {
     setSelectedClass(classKey);
@@ -81,10 +81,19 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
         return;
       }
 
-      console.log('Hero created successfully:', data);
-      
-      // Call the callback immediately since the profile is now set in the store
-      onHeroCreated();
+      if (data) {
+        console.log('Hero created successfully:', data);
+        
+        // Ensure the profile is immediately set in the store
+        setProfile(data);
+        
+        // Small delay to ensure state is updated before calling callback
+        setTimeout(() => {
+          onHeroCreated();
+        }, 100);
+      } else {
+        setError('Failed to create hero. Please try again.');
+      }
       
     } catch (error) {
       console.error('Error creating hero:', error);

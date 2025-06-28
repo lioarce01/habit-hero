@@ -161,7 +161,7 @@ export const useGameStore = create<GameState>()(
           throw checkError;
         }
 
-        // If profile already exists, return it
+        // If profile already exists, return it and set it in store
         if (existingProfile) {
           console.log('Profile already exists, returning existing profile:', existingProfile);
           set({ profile: existingProfile });
