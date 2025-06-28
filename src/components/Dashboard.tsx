@@ -1,47 +1,43 @@
 import React, { useState } from 'react';
-import { Database } from '../lib/database.types';
 import { HeroProfile } from './HeroProfile';
 import { QuestBoard } from './QuestBoard';
 import { QuestManager } from './QuestManager';
-import { useQuests } from '../hooks/useQuests';
-import { useQuestCompletions } from '../hooks/useQuestCompletions';
-import { useUserProfile } from '../hooks/useUserProfile';
+import { useGameData } from '../hooks/useGameData';
 import { useAuth } from '../hooks/useAuth';
 import { LogOut, BarChart3 } from 'lucide-react';
 
-type UserProfile = Database['public']['Tables']['users']['Row'];
-
-interface DashboardProps {
-  profile: UserProfile;
-}
-
 type ActiveTab = 'quests' | 'progress';
 
-export const Dashboard: React.FC<DashboardProps> = ({ profile }) => {
+export const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('quests');
   const [showQuestManager, setShowQuestManager] = useState(false);
   
   const { signOut } = useAuth();
-  const { quests, loading, refetch } = useQuests({ status: 'active' });
-  const { loadTodayCompletions } = useQuestCompletions();
-  const { refetch: refetchProfile } = useUserProfile();
+  const { profile, quests, loading } = useGameData();
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   const handleQuestAdded = () => {
-    refetch();
+    // No need to manually refetch - real-time subscriptions handle this
+    setShowQuestManager(false);
   };
 
-  const handleQuestComplete = async () => {
-    // Reload today's completions, refetch quests, and refresh profile
-    await Promise.all([
-      loadTodayCompletions(),
-      refetch(),
-      refetchProfile()
-    ]);
+  const handleQuestComplete = () => {
+    // No need to manually refetch - real-time subscriptions handle this
   };
+
+  if (loading || !profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading your epic adventure...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">

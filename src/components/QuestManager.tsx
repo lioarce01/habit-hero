@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sword, Book, Heart, Leaf, X, Plus } from 'lucide-react';
-import { useQuests } from '../hooks/useQuests';
+import { useQuestActions } from '../hooks/useQuestActions';
 
 interface QuestManagerProps {
   onClose: () => void;
@@ -25,16 +25,13 @@ export const QuestManager: React.FC<QuestManagerProps> = ({ onClose, onQuestAdde
   const [questDescription, setQuestDescription] = useState('');
   const [selectedStat, setSelectedStat] = useState<string>('power');
   const [selectedDifficulty, setSelectedDifficulty] = useState<1 | 2 | 3>(1);
-  const [loading, setLoading] = useState(false);
 
-  const { addQuest } = useQuests();
+  const { addQuest, loading } = useQuestActions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!questName.trim() || !questDescription.trim() || loading) return;
-
-    setLoading(true);
 
     try {
       const { error } = await addQuest({
@@ -50,11 +47,8 @@ export const QuestManager: React.FC<QuestManagerProps> = ({ onClose, onQuestAdde
       }
 
       onQuestAdded();
-      onClose();
     } catch (error) {
       console.error('Error adding quest:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

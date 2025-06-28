@@ -3,13 +3,13 @@ import { AuthForm } from './components/AuthForm';
 import { HeroCreation } from './components/HeroCreation';
 import { Dashboard } from './components/Dashboard';
 import { useAuth } from './hooks/useAuth';
-import { useUserProfile } from './hooks/useUserProfile';
+import { useGameData } from './hooks/useGameData';
 
 function App() {
   const { user, loading: authLoading } = useAuth();
-  const { profile, loading: profileLoading } = useUserProfile();
+  const { profile, profileLoading } = useGameData();
 
-  if (authLoading || profileLoading) {
+  if (authLoading || (user && profileLoading)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -28,7 +28,7 @@ function App() {
     return <HeroCreation onHeroCreated={() => {}} />;
   }
 
-  return <Dashboard profile={profile} />;
+  return <Dashboard />;
 }
 
 export default App;

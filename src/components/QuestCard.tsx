@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Database } from '../lib/database.types';
 import { Sword, Book, Heart, Leaf, Star, Flame, CheckCircle2 } from 'lucide-react';
-import { useQuestCompletions } from '../hooks/useQuestCompletions';
+import { useQuestActions } from '../hooks/useQuestActions';
+import { useGameStore } from '../store/gameStore';
 
 type Quest = Database['public']['Tables']['quests']['Row'];
 
@@ -26,12 +27,13 @@ const statColors = {
 
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
   const [loading, setLoading] = useState(false);
-  const { isQuestCompletedToday, completeQuest } = useQuestCompletions();
+  const { completeQuest } = useQuestActions();
+  const { isQuestCompletedToday } = useGameStore();
 
   const StatIcon = statIcons[quest.stat_type];
   const statColor = statColors[quest.stat_type];
 
-  // Check if quest is completed today using the hook
+  // Check if quest is completed today using the store
   const isCompleted = isQuestCompletedToday(quest.id);
 
   const handleComplete = async () => {
@@ -40,7 +42,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
     setLoading(true);
     try {
       await completeQuest(quest.id, quest.difficulty, quest.stat_type, quest.current_streak);
-      onComplete(); // This will trigger a refetch in the parent component
+      onComplete(); // Optional callback for parent component
     } catch (error) {
       console.error('Error completing quest:', error);
       // You could add a toast notification here for better UX
