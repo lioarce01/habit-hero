@@ -8,7 +8,7 @@ type QuestCompletion = Database['public']['Tables']['quest_completions']['Row'];
 
 export const useQuestCompletions = () => {
   const { user } = useAuth();
-  const { profile, updateProfile } = useUserProfile();
+  const { profile, updateProfile, refetch: refetchProfile } = useUserProfile();
   const [completions, setCompletions] = useState<QuestCompletion[]>([]);
   const [loading, setLoading] = useState(false);
   const [completedQuestIds, setCompletedQuestIds] = useState<Set<string>>(new Set());
@@ -82,6 +82,22 @@ export const useQuestCompletions = () => {
     return Math.floor(100 * Math.pow(1.5, level - 1));
   };
 
+  const calculateLevelFromXP = (totalXP: number): number => {
+    if (totalXP < 100) return 1;
+    
+    let level = 1;
+    let xpRequired = 100;
+    let currentXP = totalXP;
+    
+    while (currentXP >= xpRequired) {
+      currentXP -= xpRequired;
+      level++;
+      xpRequired = Math.floor(100 * Math.pow(1.5, level - 2));
+    }
+    
+    return level - 1;
+  };
+
   const completeQuest = async (questId: string, difficulty: number, statType: string, currentStreak: number) => {
     if (!user || !profile) throw new Error('No user or profile found');
 
@@ -129,16 +145,20 @@ export const useQuestCompletions = () => {
 
       // Calculate new user stats
       const newTotalXP = profile.total_xp + xpGain;
-      const newLevel = Math.floor(Math.log(newTotalXP / 100 + 1) / Math.log(1.5)) + 1;
+      const newLevel = calculateLevelFromXP(newTotalXP);
       
       const statUpdates = {
         total_xp: newTotalXP,
         level: newLevel,
-        [`${statType}_stat`]: profile[`${statType}_stat` as keyof typeof profile] + statGain,
+        [`${statType}_stat`]: (profile[`${statType}_stat` as keyof typeof profile] as number) + statGain,
       };
 
       // Update user profile
-      await updateProfile(statUpdates);
+      const { error: updateError } = await updateProfile(statUpdates);
+      if (updateError) throw updateError;
+
+      // Refresh profile data to ensure UI is updated
+      await refetchProfile();
 
       // Update local state immediately
       setCompletedQuestIds(prev => new Set([...prev, questId]));

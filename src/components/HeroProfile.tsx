@@ -39,11 +39,18 @@ const calculateXPToNextLevel = (level: number): number => {
   return Math.floor(100 * Math.pow(1.5, level - 1));
 };
 
+const calculateXPForCurrentLevel = (level: number): number => {
+  if (level <= 1) return 0;
+  return Math.floor(100 * Math.pow(1.5, level - 2));
+};
+
 export const HeroProfile: React.FC<HeroProfileProps> = ({ profile }) => {
   const ClassIcon = getClassIcon(profile.hero_class);
   const xpToNext = calculateXPToNextLevel(profile.level);
-  const currentLevelXP = profile.level > 1 ? calculateXPToNextLevel(profile.level - 1) : 0;
-  const xpProgress = ((profile.total_xp - currentLevelXP) / (xpToNext - currentLevelXP)) * 100;
+  const currentLevelXP = calculateXPForCurrentLevel(profile.level);
+  const xpInCurrentLevel = profile.total_xp - currentLevelXP;
+  const xpNeededForCurrentLevel = xpToNext - currentLevelXP;
+  const xpProgress = Math.max(0, Math.min(100, (xpInCurrentLevel / xpNeededForCurrentLevel) * 100));
   
   const getStatColor = (statType: string) => {
     const colors = {
@@ -101,13 +108,18 @@ export const HeroProfile: React.FC<HeroProfileProps> = ({ profile }) => {
             <Zap className="w-4 h-4 text-yellow-400" />
             <span className="text-sm text-gray-300">Experience</span>
           </div>
-          <span className="text-sm text-gray-400">{profile.total_xp} / {xpToNext} XP</span>
+          <span className="text-sm text-gray-400">
+            {xpInCurrentLevel} / {xpNeededForCurrentLevel} XP
+          </span>
         </div>
         <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
           <div 
             className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500 ease-out"
-            style={{ width: `${Math.max(0, Math.min(100, xpProgress))}%` }}
+            style={{ width: `${xpProgress}%` }}
           />
+        </div>
+        <div className="text-xs text-gray-500 mt-1">
+          Total XP: {profile.total_xp} | Next Level: {xpToNext} XP
         </div>
       </div>
 
