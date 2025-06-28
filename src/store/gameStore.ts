@@ -363,7 +363,7 @@ export const useGameStore = create<GameState>()(
     // Real-time subscriptions
     subscribeToProfile: (userId) => {
       const subscription = supabase
-        .channel('profile-changes')
+        .channel(`profile-changes-${userId}`)
         .on(
           'postgres_changes',
           {
@@ -392,7 +392,7 @@ export const useGameStore = create<GameState>()(
     
     subscribeToQuests: (userId) => {
       const subscription = supabase
-        .channel('quests-changes')
+        .channel(`quests-changes-${userId}`)
         .on(
           'postgres_changes',
           {
@@ -426,7 +426,7 @@ export const useGameStore = create<GameState>()(
       const today = new Date().toISOString().split('T')[0];
       
       const subscription = supabase
-        .channel('completions-changes')
+        .channel(`completions-changes-${userId}`)
         .on(
           'postgres_changes',
           {

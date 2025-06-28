@@ -52,7 +52,7 @@ function App() {
   if (!profile) {
     return <HeroCreation onHeroCreated={() => {
       console.log('Hero creation completed, should redirect to dashboard');
-      // The profile should now be set in the store, triggering a re-render
+      // The App component will automatically re-render when the profile is set in the store
     }} />;
   }
 

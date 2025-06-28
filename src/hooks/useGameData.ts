@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useAuth } from './useAuth';
 
 export const useGameData = () => {
   const { user, loading: authLoading } = useAuth();
+  const prevUserIdRef = useRef<string | null>(null);
+  
   const {
     profile,
     profileLoading,
@@ -20,14 +22,31 @@ export const useGameData = () => {
   } = useGameStore();
 
   useEffect(() => {
-    if (!user) {
-      // Reset store when user logs out
+    const currentUserId = user?.id || null;
+    const prevUserId = prevUserIdRef.current;
+
+    // Only reset store if user actually changed (not just auth state events)
+    if (prevUserId !== null && prevUserId !== currentUserId) {
+      console.log('User changed, resetting store:', { prevUserId, currentUserId });
       resetStore();
+    }
+
+    // Update the ref
+    prevUserIdRef.current = currentUserId;
+
+    if (!user) {
+      // Only reset if we had a user before
+      if (prevUserId !== null) {
+        resetStore();
+      }
       return;
     }
 
-    // Initialize data when user is available
-    initializeUserData(user.id);
+    // Initialize data when user is available (only if we don't have data already)
+    if (!profile && !profileLoading) {
+      console.log('Initializing user data for:', user.id);
+      initializeUserData(user.id);
+    }
 
     // Set up real-time subscriptions
     const unsubscribeProfile = subscribeToProfile(user.id);
@@ -40,7 +59,7 @@ export const useGameData = () => {
       unsubscribeQuests();
       unsubscribeCompletions();
     };
-  }, [user?.id]);
+  }, [user?.id]); // Only depend on user ID, not the entire user object
 
   return {
     profile,
