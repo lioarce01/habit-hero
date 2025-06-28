@@ -3,29 +3,51 @@ import { HeroProfile } from './HeroProfile';
 import { QuestBoard } from './QuestBoard';
 import { QuestManager } from './QuestManager';
 import { useGameData } from '../hooks/useGameData';
+import { useGameStore } from '../store/gameStore';
 import { useAuth } from '../hooks/useAuth';
-import { LogOut, BarChart3 } from 'lucide-react';
+import { LogOut, BarChart3, RefreshCw } from 'lucide-react';
 
 type ActiveTab = 'quests' | 'progress';
 
 export const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('quests');
   const [showQuestManager, setShowQuestManager] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { profile, quests, loading } = useGameData();
+  const { refreshData } = useGameStore();
 
   const handleSignOut = async () => {
     await signOut();
   };
 
   const handleQuestAdded = () => {
-    // No need to manually refetch - real-time subscriptions handle this
     setShowQuestManager(false);
+    // Refresh data to show the new quest
+    if (user) {
+      refreshData(user.id);
+    }
   };
 
   const handleQuestComplete = () => {
-    // No need to manually refetch - real-time subscriptions handle this
+    // Refresh data to update quest status and user stats
+    if (user) {
+      refreshData(user.id);
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (!user || refreshing) return;
+    
+    setRefreshing(true);
+    try {
+      await refreshData(user.id);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   if (loading || !profile) {
@@ -52,14 +74,25 @@ export const Dashboard: React.FC = () => {
             <p className="text-gray-400">Your Epic Adventure Continues...</p>
           </div>
           
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 
-              text-gray-300 rounded-lg transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 
+                text-gray-300 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+            
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 
+                text-gray-300 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </div>
         </div>
 
         {/* Hero Profile */}

@@ -14,9 +14,6 @@ export const useGameData = () => {
     todayCompletions,
     completionsLoading,
     initializeUserData,
-    subscribeToProfile,
-    subscribeToQuests,
-    subscribeToCompletions,
     isQuestCompletedToday,
     resetStore,
   } = useGameStore();
@@ -47,18 +44,6 @@ export const useGameData = () => {
       console.log('Initializing user data for:', user.id);
       initializeUserData(user.id);
     }
-
-    // Set up real-time subscriptions
-    const unsubscribeProfile = subscribeToProfile(user.id);
-    const unsubscribeQuests = subscribeToQuests(user.id);
-    const unsubscribeCompletions = subscribeToCompletions(user.id);
-
-    // Cleanup subscriptions
-    return () => {
-      unsubscribeProfile();
-      unsubscribeQuests();
-      unsubscribeCompletions();
-    };
   }, [user?.id]); // Only depend on user ID, not the entire user object
 
   return {
