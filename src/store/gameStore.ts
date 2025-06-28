@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase';
 type UserProfile = Database['public']['Tables']['users']['Row'];
 type Quest = Database['public']['Tables']['quests']['Row'];
 type QuestCompletion = Database['public']['Tables']['quest_completions']['Row'];
+type QuestInsert = Database['public']['Tables']['quests']['Insert'];
+type UserProfileInsert = Database['public']['Tables']['users']['Insert'];
 
 interface GameState {
   // User Profile
@@ -40,6 +42,11 @@ interface GameState {
   // Computed values
   isQuestCompletedToday: (questId: string) => boolean;
   
+  // Database operations
+  createProfile: (profileData: Omit<UserProfileInsert, 'id'>, userId: string) => Promise<{ data: UserProfile | null; error: any }>;
+  createQuest: (questData: Omit<QuestInsert, 'user_id'>, userId: string) => Promise<{ data: Quest | null; error: any }>;
+  completeQuest: (questId: string, difficulty: number, statType: string, currentStreak: number, userId: string) => Promise<any>;
+  
   // Initialize data
   initializeUserData: (userId: string) => Promise<void>;
   
@@ -48,6 +55,32 @@ interface GameState {
   subscribeToQuests: (userId: string) => () => void;
   subscribeToCompletions: (userId: string) => () => void;
 }
+
+const calculateQuestXP = (difficulty: number, streak: number): number => {
+  const baseXP = difficulty * 25;
+  const streakMultiplier = Math.min(1 + (streak * 0.1), 2.5);
+  return Math.floor(baseXP * streakMultiplier);
+};
+
+const calculateStatGain = (difficulty: number): number => {
+  return difficulty;
+};
+
+const calculateLevelFromXP = (totalXP: number): number => {
+  if (totalXP < 100) return 1;
+  
+  let level = 1;
+  let xpRequired = 100;
+  let currentXP = totalXP;
+  
+  while (currentXP >= xpRequired) {
+    currentXP -= xpRequired;
+    level++;
+    xpRequired = Math.floor(100 * Math.pow(1.5, level - 2));
+  }
+  
+  return level - 1;
+};
 
 export const useGameStore = create<GameState>()(
   subscribeWithSelector((set, get) => ({
@@ -101,6 +134,124 @@ export const useGameStore = create<GameState>()(
     
     // Computed values
     isQuestCompletedToday: (questId) => get().todayCompletions.has(questId),
+    
+    // Database operations
+    createProfile: async (profileData, userId) => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            ...profileData,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        set({ profile: data });
+        return { data, error: null };
+      } catch (error) {
+        console.error('Error creating profile:', error);
+        return { data: null, error };
+      }
+    },
+
+    createQuest: async (questData, userId) => {
+      try {
+        const { data, error } = await supabase
+          .from('quests')
+          .insert({
+            user_id: userId,
+            ...questData,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const { addQuest } = get();
+        addQuest(data);
+        return { data, error: null };
+      } catch (error) {
+        console.error('Error creating quest:', error);
+        return { data: null, error };
+      }
+    },
+
+    completeQuest: async (questId, difficulty, statType, currentStreak, userId) => {
+      const { profile, updateProfile, addTodayCompletion, updateQuest } = get();
+      
+      if (!profile) throw new Error('No profile found');
+
+      try {
+        // Calculate rewards
+        const xpGain = calculateQuestXP(difficulty, currentStreak);
+        const statGain = calculateStatGain(difficulty);
+        const newStreak = currentStreak + 1;
+
+        // Record completion
+        const { error: completionError } = await supabase
+          .from('quest_completions')
+          .insert({
+            quest_id: questId,
+            user_id: userId,
+            xp_gained: xpGain,
+          });
+
+        if (completionError) throw completionError;
+
+        // Update quest streak and total completions
+        const { error: questError } = await supabase
+          .from('quests')
+          .update({
+            current_streak: newStreak,
+            best_streak: Math.max(newStreak, currentStreak),
+            total_completions: supabase.sql`total_completions + 1`,
+          })
+          .eq('id', questId);
+
+        if (questError) throw questError;
+
+        // Calculate new user stats
+        const newTotalXP = profile.total_xp + xpGain;
+        const newLevel = calculateLevelFromXP(newTotalXP);
+        
+        const statUpdates = {
+          total_xp: newTotalXP,
+          level: newLevel,
+          [`${statType}_stat`]: (profile[`${statType}_stat` as keyof typeof profile] as number) + statGain,
+        };
+
+        // Update user profile in database
+        const { error: updateError } = await supabase
+          .from('users')
+          .update(statUpdates)
+          .eq('id', userId);
+
+        if (updateError) throw updateError;
+
+        // Update local state immediately
+        updateProfile(statUpdates);
+        addTodayCompletion(questId);
+        updateQuest(questId, {
+          current_streak: newStreak,
+          best_streak: Math.max(newStreak, currentStreak),
+          total_completions: profile.total_completions + 1,
+        });
+
+        return {
+          xpGain,
+          statGain,
+          newStreak,
+          leveledUp: newLevel > profile.level,
+          newLevel,
+        };
+      } catch (error) {
+        console.error('Error completing quest:', error);
+        throw error;
+      }
+    },
     
     // Initialize all user data
     initializeUserData: async (userId) => {

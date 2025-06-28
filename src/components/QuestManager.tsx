@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sword, Book, Heart, Leaf, X, Plus } from 'lucide-react';
-import { useQuestActions } from '../hooks/useQuestActions';
+import { useGameStore } from '../store/gameStore';
+import { useAuth } from '../hooks/useAuth';
 
 interface QuestManagerProps {
   onClose: () => void;
@@ -25,21 +26,25 @@ export const QuestManager: React.FC<QuestManagerProps> = ({ onClose, onQuestAdde
   const [questDescription, setQuestDescription] = useState('');
   const [selectedStat, setSelectedStat] = useState<string>('power');
   const [selectedDifficulty, setSelectedDifficulty] = useState<1 | 2 | 3>(1);
+  const [loading, setLoading] = useState(false);
 
-  const { addQuest, loading } = useQuestActions();
+  const { user } = useAuth();
+  const { createQuest } = useGameStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!questName.trim() || !questDescription.trim() || loading) return;
+    if (!questName.trim() || !questDescription.trim() || loading || !user) return;
+
+    setLoading(true);
 
     try {
-      const { error } = await addQuest({
+      const { error } = await createQuest({
         name: questName.trim(),
         description: questDescription.trim(),
         stat_type: selectedStat as any,
         difficulty: selectedDifficulty
-      });
+      }, user.id);
 
       if (error) {
         console.error('Error adding quest:', error);
@@ -49,6 +54,8 @@ export const QuestManager: React.FC<QuestManagerProps> = ({ onClose, onQuestAdde
       onQuestAdded();
     } catch (error) {
       console.error('Error adding quest:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

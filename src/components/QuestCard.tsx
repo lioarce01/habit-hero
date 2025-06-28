@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Database } from '../lib/database.types';
 import { Sword, Book, Heart, Leaf, Star, Flame, CheckCircle2 } from 'lucide-react';
-import { useQuestActions } from '../hooks/useQuestActions';
 import { useGameStore } from '../store/gameStore';
+import { useAuth } from '../hooks/useAuth';
 
 type Quest = Database['public']['Tables']['quests']['Row'];
 
@@ -27,8 +27,8 @@ const statColors = {
 
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
   const [loading, setLoading] = useState(false);
-  const { completeQuest } = useQuestActions();
-  const { isQuestCompletedToday } = useGameStore();
+  const { user } = useAuth();
+  const { completeQuest, isQuestCompletedToday } = useGameStore();
 
   const StatIcon = statIcons[quest.stat_type];
   const statColor = statColors[quest.stat_type];
@@ -37,11 +37,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
   const isCompleted = isQuestCompletedToday(quest.id);
 
   const handleComplete = async () => {
-    if (isCompleted || loading) return;
+    if (isCompleted || loading || !user) return;
 
     setLoading(true);
     try {
-      await completeQuest(quest.id, quest.difficulty, quest.stat_type, quest.current_streak);
+      await completeQuest(quest.id, quest.difficulty, quest.stat_type, quest.current_streak, user.id);
       onComplete(); // Optional callback for parent component
     } catch (error) {
       console.error('Error completing quest:', error);

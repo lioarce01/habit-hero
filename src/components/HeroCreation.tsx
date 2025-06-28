@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sword, Book, Heart, Leaf, Sparkles } from 'lucide-react';
-import { useUserProfile } from '../hooks/useUserProfile';
 import { useGameStore } from '../store/gameStore';
+import { useAuth } from '../hooks/useAuth';
 
 const heroClasses = {
   warrior: {
@@ -51,8 +51,8 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
   const [showNameInput, setShowNameInput] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { createProfile } = useUserProfile();
-  const { setProfile } = useGameStore();
+  const { user } = useAuth();
+  const { createProfile } = useGameStore();
 
   const handleClassSelect = (classKey: string) => {
     setSelectedClass(classKey);
@@ -60,7 +60,7 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
   };
 
   const handleCreateHero = async () => {
-    if (!heroName.trim() || !selectedClass || loading) return;
+    if (!heroName.trim() || !selectedClass || loading || !user) return;
 
     setLoading(true);
 
@@ -70,7 +70,7 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
       const { data, error } = await createProfile({
         name: heroName.trim(),
         hero_class: selectedClass as any,
-      });
+      }, user.id);
 
       if (error) {
         console.error('Error creating hero:', error);
@@ -78,13 +78,6 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
       }
 
       console.log('Hero created successfully:', data);
-      
-      // Update the store immediately with the new profile
-      if (data) {
-        setProfile(data);
-      }
-
-      // Call the callback (though it might be empty)
       onHeroCreated();
     } catch (error) {
       console.error('Error creating hero:', error);
