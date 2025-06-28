@@ -93,7 +93,10 @@ export const useGameStore = create<GameState>()(
     completionsLoading: false,
 
     // Actions
-    setProfile: (profile) => set({ profile }),
+    setProfile: (profile) => {
+      console.log('Setting profile in store:', profile?.name);
+      set({ profile });
+    },
     
     updateProfile: (updates) => set((state) => ({
       profile: state.profile ? { ...state.profile, ...updates } : null
@@ -118,25 +121,33 @@ export const useGameStore = create<GameState>()(
     })),
     
     // Loading states
-    setProfileLoading: (loading) => set({ profileLoading: loading }),
+    setProfileLoading: (loading) => {
+      console.log('Setting profile loading:', loading);
+      set({ profileLoading: loading });
+    },
     setQuestsLoading: (loading) => set({ questsLoading: loading }),
     setCompletionsLoading: (loading) => set({ completionsLoading: loading }),
     
     // Reset store
-    resetStore: () => set({
-      profile: null,
-      profileLoading: false,
-      quests: [],
-      questsLoading: false,
-      todayCompletions: new Set(),
-      completionsLoading: false,
-    }),
+    resetStore: () => {
+      console.log('Resetting store');
+      set({
+        profile: null,
+        profileLoading: false,
+        quests: [],
+        questsLoading: false,
+        todayCompletions: new Set(),
+        completionsLoading: false,
+      });
+    },
     
     // Computed values
     isQuestCompletedToday: (questId) => get().todayCompletions.has(questId),
     
     // Database operations
     createProfile: async (profileData, userId) => {
+      console.log('Creating profile in store:', profileData, userId);
+      
       try {
         const { data, error } = await supabase
           .from('users')
@@ -147,9 +158,16 @@ export const useGameStore = create<GameState>()(
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Database error creating profile:', error);
+          throw error;
+        }
 
+        console.log('Profile created successfully in database:', data);
+        
+        // Immediately update the store
         set({ profile: data });
+        
         return { data, error: null };
       } catch (error) {
         console.error('Error creating profile:', error);
@@ -278,6 +296,7 @@ export const useGameStore = create<GameState>()(
         
         // Update state
         if (profileResult.data) {
+          console.log('Setting profile from initialization:', profileResult.data.name);
           set({ profile: profileResult.data });
         } else {
           console.log('No profile found for user:', userId);
@@ -316,7 +335,11 @@ export const useGameStore = create<GameState>()(
           },
           (payload) => {
             console.log('Profile change received:', payload);
-            if (payload.eventType === 'UPDATE' && payload.new) {
+            if (payload.eventType === 'INSERT' && payload.new) {
+              console.log('Profile inserted via real-time:', payload.new);
+              set({ profile: payload.new as UserProfile });
+            } else if (payload.eventType === 'UPDATE' && payload.new) {
+              console.log('Profile updated via real-time:', payload.new);
               set({ profile: payload.new as UserProfile });
             }
           }

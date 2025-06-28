@@ -78,7 +78,12 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
       }
 
       console.log('Hero created successfully:', data);
-      onHeroCreated();
+      
+      // Small delay to ensure the profile is properly set in the store
+      setTimeout(() => {
+        onHeroCreated();
+      }, 100);
+      
     } catch (error) {
       console.error('Error creating hero:', error);
     } finally {
@@ -159,6 +164,11 @@ export const HeroCreation: React.FC<HeroCreationProps> = ({ onHeroCreated }) => 
                     placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 
                     focus:ring-opacity-50 transition-colors text-center text-lg"
                   autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && heroName.trim()) {
+                      handleCreateHero();
+                    }
+                  }}
                 />
               </div>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AuthForm } from './components/AuthForm';
 import { HeroCreation } from './components/HeroCreation';
 import { Dashboard } from './components/Dashboard';
@@ -8,6 +8,16 @@ import { useGameData } from './hooks/useGameData';
 function App() {
   const { user, loading: authLoading } = useAuth();
   const { profile, profileLoading } = useGameData();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('App state:', { 
+      user: user?.id, 
+      authLoading, 
+      profile: profile?.name, 
+      profileLoading 
+    });
+  }, [user, authLoading, profile, profileLoading]);
 
   // Show loading while checking authentication
   if (authLoading) {
@@ -40,7 +50,11 @@ function App() {
 
   // Show hero creation if no profile exists
   if (!profile) {
-    return <HeroCreation onHeroCreated={() => {}} />;
+    return <HeroCreation onHeroCreated={() => {
+      console.log('Hero creation completed, should redirect to dashboard');
+      // Force a re-render by triggering a state update
+      window.location.reload();
+    }} />;
   }
 
   // Show dashboard if everything is ready
