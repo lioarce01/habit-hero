@@ -27,6 +27,7 @@ const statColors = {
 
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { completeQuest, isQuestCompletedToday } = useGameStore();
 
@@ -40,12 +41,25 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
     if (isCompleted || loading || !user) return;
 
     setLoading(true);
+    setError(null);
+    
     try {
-      await completeQuest(quest.id, quest.difficulty, quest.stat_type, quest.current_streak, user.id);
+      const result = await completeQuest(quest.id, quest.difficulty, quest.stat_type, quest.current_streak, user.id);
+      
+      console.log('Quest completion result:', result);
+      
+      // Show success feedback
+      if (result.leveledUp) {
+        console.log(`🎉 LEVEL UP! You are now level ${result.newLevel}!`);
+      }
+      
       onComplete(); // Optional callback for parent component
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error completing quest:', error);
-      // You could add a toast notification here for better UX
+      setError(error.message || 'Failed to complete quest');
+      
+      // Clear error after 3 seconds
+      setTimeout(() => setError(null), 3000);
     } finally {
       setLoading(false);
     }
@@ -117,6 +131,12 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onComplete }) => {
             <p className="text-gray-300 text-sm mb-3 leading-relaxed">
               {quest.description}
             </p>
+          )}
+
+          {error && (
+            <div className="bg-red-600 bg-opacity-20 border border-red-500 rounded-lg p-2 mb-3">
+              <p className="text-red-400 text-xs">{error}</p>
+            </div>
           )}
         </div>
 

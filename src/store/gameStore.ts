@@ -345,6 +345,20 @@ export const useGameStore = create<GameState>()((set, get) => ({
     if (!profile) throw new Error('No profile found');
 
     try {
+      // Check if already completed today
+      const today = new Date().toISOString().split('T')[0];
+      const { data: existingCompletion } = await supabase
+        .from('quest_completions')
+        .select('id')
+        .eq('quest_id', questId)
+        .eq('user_id', userId)
+        .eq('completed_at', today)
+        .maybeSingle();
+
+      if (existingCompletion) {
+        throw new Error('Quest already completed today');
+      }
+
       // Calculate rewards
       const xpGain = calculateQuestXP(difficulty, currentStreak);
       const statGain = calculateStatGain(difficulty);
@@ -361,13 +375,25 @@ export const useGameStore = create<GameState>()((set, get) => ({
 
       if (completionError) throw completionError;
 
+      // Get current quest data to calculate new totals
+      const { data: currentQuest, error: questFetchError } = await supabase
+        .from('quests')
+        .select('total_completions, best_streak')
+        .eq('id', questId)
+        .single();
+
+      if (questFetchError) throw questFetchError;
+
       // Update quest streak and total completions
+      const newTotalCompletions = currentQuest.total_completions + 1;
+      const newBestStreak = Math.max(newStreak, currentQuest.best_streak);
+
       const { error: questError } = await supabase
         .from('quests')
         .update({
           current_streak: newStreak,
-          best_streak: Math.max(newStreak, currentStreak),
-          total_completions: supabase.sql`total_completions + 1`,
+          best_streak: newBestStreak,
+          total_completions: newTotalCompletions,
         })
         .eq('id', questId);
 
@@ -396,8 +422,17 @@ export const useGameStore = create<GameState>()((set, get) => ({
       addTodayCompletion(questId);
       updateQuest(questId, {
         current_streak: newStreak,
-        best_streak: Math.max(newStreak, currentStreak),
-        total_completions: profile.total_completions + 1,
+        best_streak: newBestStreak,
+        total_completions: newTotalCompletions,
+      });
+
+      console.log('Quest completed successfully:', {
+        questId,
+        xpGain,
+        statGain,
+        newStreak,
+        newLevel,
+        leveledUp: newLevel > profile.level
       });
 
       return {
