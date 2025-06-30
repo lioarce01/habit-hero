@@ -3,7 +3,6 @@ import { AuthForm } from './components/AuthForm';
 import { HeroCreation } from './components/HeroCreation';
 import { Dashboard } from './components/Dashboard';
 import { BoltBadge } from './components/BoltBadge';
-import { PromoCodeBanner } from './components/PromoCodeBanner';
 import { useAuth } from './hooks/useAuth';
 import { useGameData } from './hooks/useGameData';
 
@@ -45,7 +44,6 @@ function App() {
     return (
       <>
         <BoltBadge />
-        <PromoCodeBanner />
         <AuthForm onSuccess={() => {}} />
       </>
     );

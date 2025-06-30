@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Mail, Lock, User, Sword, Gift } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, Sword } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 interface AuthFormProps {
@@ -10,10 +10,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [promoCode, setPromoCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPromoSuccess, setShowPromoSuccess] = useState(false);
 
   const { signIn, signUp } = useAuth();
 
@@ -23,18 +21,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     setError(null);
 
     try {
-      // Validate promo code if provided
-      if (promoCode && promoCode.toUpperCase() !== 'HERO2025') {
-        setError('Invalid promo code. Try HERO2025 for exclusive access!');
-        setLoading(false);
-        return;
-      }
-
-      if (promoCode.toUpperCase() === 'HERO2025') {
-        setShowPromoSuccess(true);
-        setTimeout(() => setShowPromoSuccess(false), 3000);
-      }
-
       const { error } = isLogin 
         ? await signIn(email, password)
         : await signUp(email, password);
@@ -42,6 +28,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       if (error) {
         setError(error.message);
       } else {
+        // Don't call onSuccess here - let the auth state change handle navigation
         console.log('Authentication successful');
       }
     } catch (err) {
@@ -69,16 +56,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
             {isLogin ? 'Welcome back, hero!' : 'Create your legendary account'}
           </p>
         </div>
-
-        {/* Promo Success Banner */}
-        {showPromoSuccess && (
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg border border-green-400 p-3 mb-6 animate-bounce">
-            <div className="flex items-center justify-center gap-2">
-              <Gift className="w-5 h-5 text-white" />
-              <span className="text-white font-semibold">🎉 Promo code activated! Welcome to the elite!</span>
-            </div>
-          </div>
-        )}
 
         {/* Auth Form */}
         <div className="bg-gray-800 rounded-xl border border-gray-700 p-8 shadow-2xl">
@@ -135,35 +112,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
               </div>
             </div>
 
-            {/* Promo Code Field */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
-                <div className="flex items-center gap-2">
-                  <Gift className="w-4 h-4 text-yellow-400" />
-                  Promo Code (Optional)
-                </div>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="HERO2025"
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white 
-                    placeholder-gray-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400 
-                    focus:ring-opacity-50 transition-colors font-mono tracking-wider"
-                />
-                {promoCode.toUpperCase() === 'HERO2025' && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                💡 Hint: Try "HERO2025" for exclusive early access benefits!
-              </p>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -193,19 +141,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                 : "Returning hero? Continue your quest!"
               }
             </button>
-          </div>
-
-          {/* Promo Benefits */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-purple-900 to-blue-900 rounded-lg border border-purple-500">
-            <div className="text-center">
-              <div className="text-yellow-400 font-semibold text-sm mb-2">🎁 HERO2025 Benefits:</div>
-              <div className="text-xs text-gray-300 space-y-1">
-                <div>⚡ Instant Level 5 boost</div>
-                <div>🏆 Exclusive "Early Adopter" title</div>
-                <div>🎮 Premium quest templates</div>
-                <div>💎 Special hero avatar unlocks</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
